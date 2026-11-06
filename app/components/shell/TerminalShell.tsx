@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FocusProvider, useFocus, TabId } from "@/lib/contexts/FocusContext";
 import { useKeyboard } from "@/lib/hooks/useKeyboard";
 import { useEmbeddingStatus } from "@/lib/hooks/useEmbeddingStatus";
@@ -8,11 +8,19 @@ import { StatusBar } from "./StatusBar";
 import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
+import { CuratedFeed } from "@/components/curated/CuratedFeed";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
+
+interface OpenArticleState {
+  articleId: string;
+  listIndex: number;
+  articleList: string[];
+}
 
 function ShellContent() {
   const { activeTab, setActiveTab, setFocusContext, focusContext } = useFocus();
   const embeddingStatus = useEmbeddingStatus();
+  const [openArticle, setOpenArticle] = useState<OpenArticleState | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -43,17 +51,33 @@ function ShellContent() {
       if (action.type === "SWITCH_TAB" && action.tab) {
         setActiveTab(action.tab);
       }
-      if (action.type === "SETTINGS") {
-        setFocusContext("SETTINGS");
-      }
     },
-    [setActiveTab, setFocusContext]
+    [setActiveTab]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
 
-  // Derive system message from embedding status
+  function handleOpenArticle(
+    articleId: string,
+    listIndex: number,
+    articleList?: string[]
+  ) {
+    setOpenArticle({ articleId, listIndex, articleList: articleList ?? [articleId] });
+    setFocusContext("CONTENT_PAGE");
+  }
+
+  function handleCloseArticle() {
+    setOpenArticle(null);
+    const map: Record<TabId, typeof focusContext> = {
+      curated:       "CURATED_LIST",
+      feed:          "FEED_LIST",
+      subscriptions: "SUBSCRIPTIONS",
+      collection:    "COLLECTION",
+    };
+    setFocusContext(map[activeTab]);
+  }
+
   let systemMessage: string | undefined;
   if (embeddingStatus.phase === "loading_model") {
     const bar = "█".repeat(Math.floor(embeddingStatus.modelProgress / 10));
@@ -67,21 +91,20 @@ function ShellContent() {
 
   const tabContent: Record<TabId, React.ReactNode> = {
     curated: (
-      <PlaceholderTab
-        title="CURATED"
-        description="Personalized recommendations — coming in Task 8"
+      <CuratedFeed
+        onOpenArticle={(id, idx, list) => handleOpenArticle(id, idx, list)}
       />
     ),
     feed: (
       <PlaceholderTab
         title="FEED"
-        description="Live article feed — see Task 4"
+        description="Live article feed — see Task 4 branch"
       />
     ),
     subscriptions: (
       <PlaceholderTab
         title="SUBSCRIPTIONS"
-        description="See Task 6"
+        description="See Task 6 branch"
       />
     ),
     collection: (
@@ -112,7 +135,7 @@ function ShellContent() {
           </div>
         ))}
       </main>
-      <KeyboardHintBar />
+      {!openArticle && <KeyboardHintBar />}
     </div>
   );
 }
