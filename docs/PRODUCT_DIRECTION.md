@@ -23,22 +23,47 @@ Here are the core page flows used to spec out the app:
     - there should be real-time updates - new content that comes out will auto-populate without refresh and push listed content down 
     - there should be a top bar with multi-select that allows the user to filter by feed source. pressing 'SPACE' selects/unselects a feed source 
     - navigating through the feed, the user can press 'SPACE' on a piece of content to open a tab displaying the content
+    - ability to mark an article as read without openign it 
 3. Subscriptions (TAB)
     - there is a checkbox list of existing subscriptions that allows the user to unsubscribe. Pressing 'SPACE' will select the source.
     - there are actions to view details about a source or unsubscribe from the source
     - there is a top search bar that allows the user to search for news sources
     - when a query fires, already selected news sources will be listed first followed by not subscribed sources 
-4. Content Page 
+4. Collection (TAB) 
+    - dedicated to displaying content you have saved, read, or want to come back to 
+5. Content Page (PAGE)
     - the content page is navigated when the user selects a piece of content from their feed or the curated tab
     - the user can press 'ESC' to return to the previous page 
     - the user can scroll through the content by using the arrow keys 
     - at the bottom of the content, the user can press down arrow to navigate to the next piece of content 
     - the user can also press a shortcut button to skip to the next content without scrolling to the bottom
     - the user's behavior will be tracked to gauge their interest and engagement with an existing piece of content - this information will be used to calibrate the curated algorithm
-5. Curated Algorithm 
+    - focused reader mode with no sidebar, recommendations, or distracting panels 
+    - reading progress at the bottom 
+
+## Backend details  
+- Curated Algorithm 
     - there is an internal algorithm that will continuously reorder the exisiting content collected from the feeds and provide the user with the best content candidates
     - the algorithm is learning from the user based on explicit interests and reading behavior 
     - there is vector data structure that we build based on content similarity 
     - telemetry is collected about the user's behavior and engagement with specific content - this is used to gauge the user's approximate interest in the vector shape
-    - do not rely exclusively on passive telemetry - add simple keyboard shortcuts: B - bookmark article, L - more like this, X - less like this, O - open original source 
+    - do not rely exclusively on passive telemetry - add simple keyboard shortcuts: B - bookmark article, L - more like this, X - less like this, O - open original source, this can be on the content page 
     - make suggestions configurable - ex. 80% personalized content 20% exploratory content 
+- RSS Directory 
+    - collect a directory of 30+ predefined RSS sources across technology, finance, science, gaming, and culture 
+    - user can paste a URL to validate and connect a feed 
+
+## Curated Algorithm 
+
+We want to build a content-based recommendation system with an evolving user-interest embedding.
+
+- each RSS article will have information that is converted into a semantic vector embedding 
+- article vectors are the semantic representation of the content 
+- user interest vector are the learned preferences and feedback; for example, different user behavior will add different weights 
+- candidate ranking will use factors like similarity, recency, diversity, and source preferences; add diversity-aware re-ranking so the top results are not identical articles 
+- curated feed is ranked with personalized articles
+- potentially maintain multiple interest vectors, as a single vector across multiple interests may end with a vector that does not represent either well 
+- we might want a lightweight onboarding experience so the user can choose a few interests and RSS sources
+- ability to reset learned preferences 
+- ability to disable behavioral telemetry 
+- ability to see and edit inferred interests
