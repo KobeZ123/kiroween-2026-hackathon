@@ -1,19 +1,42 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { FocusProvider, useFocus, TabId } from "@/lib/contexts/FocusContext";
 import { useKeyboard } from "@/lib/hooks/useKeyboard";
+import { useEmbeddingStatus } from "@/lib/hooks/useEmbeddingStatus";
 import { StatusBar } from "./StatusBar";
 import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
+import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
-// Inner shell content — has access to FocusProvider context
 function ShellContent() {
-  const { activeTab, setActiveTab, setFocusContext } = useFocus();
-  const [systemMessage, setSystemMessage] = useState<string | undefined>(undefined);
+  const { activeTab, setActiveTab, setFocusContext, focusContext } = useFocus();
+  const embeddingStatus = useEmbeddingStatus();
 
-  const tabOrder: TabId[] = ["curated", "feed", "subscriptions", "collection"];
+  useEffect(() => {
+    async function init() {
+      try {
+        await seedFeedDirectory();
+        await initializeUserProfile();
+      } catch (e) {
+        console.warn("DB init error:", e);
+      }
+    }
+    init();
+  }, []);
+
+  useEffect(() => {
+    const map: Record<TabId, typeof focusContext> = {
+      curated:       "CURATED_LIST",
+      feed:          "FEED_LIST",
+      subscriptions: "SUBSCRIPTIONS",
+      collection:    "COLLECTION",
+    };
+    if (focusContext !== "CONTENT_PAGE" && focusContext !== "SETTINGS") {
+      setFocusContext(map[activeTab]);
+    }
+  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleAction = useCallback(
     (action: { type: string; tab?: TabId }) => {
@@ -22,7 +45,6 @@ function ShellContent() {
       }
       if (action.type === "SETTINGS") {
         setFocusContext("SETTINGS");
-        setSystemMessage("SETTINGS");
       }
     },
     [setActiveTab, setFocusContext]
@@ -30,6 +52,18 @@ function ShellContent() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
+
+  // Derive system message from embedding status
+  let systemMessage: string | undefined;
+  if (embeddingStatus.phase === "loading_model") {
+    const bar = "█".repeat(Math.floor(embeddingStatus.modelProgress / 10));
+    const empty = "░".repeat(10 - bar.length);
+    systemMessage = `CALIBRATING ENGINE [${bar}${empty}] ${embeddingStatus.modelProgress}%`;
+  } else if (embeddingStatus.phase === "processing") {
+    systemMessage = `EMBEDDING ARTICLES... (${embeddingStatus.queueLength} remaining)`;
+  }
+
+  const tabOrder: TabId[] = ["curated", "feed", "subscriptions", "collection"];
 
   const tabContent: Record<TabId, React.ReactNode> = {
     curated: (
@@ -41,13 +75,13 @@ function ShellContent() {
     feed: (
       <PlaceholderTab
         title="FEED"
-        description="Live article feed — coming in Task 4"
+        description="Live article feed — see Task 4"
       />
     ),
     subscriptions: (
       <PlaceholderTab
         title="SUBSCRIPTIONS"
-        description="Manage your RSS sources — coming in Task 6"
+        description="See Task 6"
       />
     ),
     collection: (
@@ -63,19 +97,14 @@ function ShellContent() {
       className="flex flex-col h-full select-none"
       style={{ backgroundColor: "var(--color-bg)" }}
     >
-      {/* Top: status bar */}
       <StatusBar systemMessage={systemMessage} />
-
-      {/* Tab navigation */}
       <TabBar />
-
-      {/* Main content area */}
       <main className="flex-1 overflow-hidden relative" role="main">
         {tabOrder.map((tab) => (
           <div
             key={tab}
-            className="absolute inset-0 overflow-y-auto"
-            style={{ display: activeTab === tab ? "block" : "none" }}
+            className="absolute inset-0 overflow-hidden flex flex-col"
+            style={{ display: activeTab === tab ? "flex" : "none" }}
             role="tabpanel"
             aria-label={tab}
           >
@@ -83,14 +112,11 @@ function ShellContent() {
           </div>
         ))}
       </main>
-
-      {/* Bottom: keyboard hints */}
       <KeyboardHintBar />
     </div>
   );
 }
 
-/** Root shell — provides all context and renders the full terminal layout */
 export function TerminalShell() {
   return (
     <FocusProvider>
