@@ -10,6 +10,8 @@ import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
 import { CuratedFeed } from "@/components/curated/CuratedFeed";
 import { CollectionTab } from "@/components/collection/CollectionTab";
+import { LiveFeed } from "@/components/feed/LiveFeed";
+import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
 // ContentPage is in Task 5 branch — placeholder here with the full interface
@@ -129,17 +131,11 @@ function ShellContent() {
       />
     ),
     feed: (
-      <PlaceholderTab
-        title="FEED"
-        description="Live article feed — see Task 4 branch"
+      <LiveFeed
+        onOpenArticle={(id, idx) => handleOpenArticle(id, idx)}
       />
     ),
-    subscriptions: (
-      <PlaceholderTab
-        title="SUBSCRIPTIONS"
-        description="See Task 6 branch"
-      />
-    ),
+    subscriptions: <SubscriptionsTab />,
     collection: (
       <CollectionTab
         onOpenArticle={(id, idx, list) => handleOpenArticle(id, idx, list)}
