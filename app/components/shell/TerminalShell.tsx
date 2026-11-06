@@ -9,9 +9,38 @@ import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
 import { CuratedFeed } from "@/components/curated/CuratedFeed";
+import { CollectionTab } from "@/components/collection/CollectionTab";
 import { LiveFeed } from "@/components/feed/LiveFeed";
 import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
+
+// ContentPage is in Task 5 branch — placeholder here with the full interface
+// It will be merged in the final integration branch (Task 10)
+function ContentPagePlaceholder({
+  articleId,
+  onClose,
+}: {
+  articleId: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4"
+      style={{ backgroundColor: "var(--color-bg)" }}
+    >
+      <span style={{ color: "var(--color-primary)" }} className="text-sm glow">
+        ARTICLE: {articleId.slice(0, 12)}...
+      </span>
+      <button
+        onClick={onClose}
+        className="text-xs tracking-wider border px-3 py-1"
+        style={{ borderColor: "var(--color-border)", color: "var(--color-dim)" }}
+      >
+        ESC CLOSE
+      </button>
+    </div>
+  );
+}
 
 interface OpenArticleState {
   articleId: string;
@@ -60,8 +89,16 @@ function ShellContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
 
-  function handleOpenArticle(articleId: string, listIndex: number, articleList?: string[]) {
-    setOpenArticle({ articleId, listIndex, articleList: articleList ?? [articleId] });
+  function handleOpenArticle(
+    articleId: string,
+    listIndex: number,
+    articleList?: string[]
+  ) {
+    setOpenArticle({
+      articleId,
+      listIndex,
+      articleList: articleList ?? [articleId],
+    });
     setFocusContext("CONTENT_PAGE");
   }
 
@@ -100,9 +137,8 @@ function ShellContent() {
     ),
     subscriptions: <SubscriptionsTab />,
     collection: (
-      <PlaceholderTab
-        title="COLLECTION"
-        description="Bookmarks, saves, and reading history — coming in Task 9"
+      <CollectionTab
+        onOpenArticle={(id, idx, list) => handleOpenArticle(id, idx, list)}
       />
     ),
   };
@@ -128,6 +164,13 @@ function ShellContent() {
         ))}
       </main>
       {!openArticle && <KeyboardHintBar />}
+
+      {openArticle && (
+        <ContentPagePlaceholder
+          articleId={openArticle.articleId}
+          onClose={handleCloseArticle}
+        />
+      )}
     </div>
   );
 }
