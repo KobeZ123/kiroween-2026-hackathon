@@ -9,6 +9,8 @@ import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
 import { CuratedFeed } from "@/components/curated/CuratedFeed";
+import { LiveFeed } from "@/components/feed/LiveFeed";
+import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
 interface OpenArticleState {
@@ -58,11 +60,7 @@ function ShellContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
 
-  function handleOpenArticle(
-    articleId: string,
-    listIndex: number,
-    articleList?: string[]
-  ) {
+  function handleOpenArticle(articleId: string, listIndex: number, articleList?: string[]) {
     setOpenArticle({ articleId, listIndex, articleList: articleList ?? [articleId] });
     setFocusContext("CONTENT_PAGE");
   }
@@ -96,17 +94,11 @@ function ShellContent() {
       />
     ),
     feed: (
-      <PlaceholderTab
-        title="FEED"
-        description="Live article feed — see Task 4 branch"
+      <LiveFeed
+        onOpenArticle={(id, idx) => handleOpenArticle(id, idx)}
       />
     ),
-    subscriptions: (
-      <PlaceholderTab
-        title="SUBSCRIPTIONS"
-        description="See Task 6 branch"
-      />
-    ),
+    subscriptions: <SubscriptionsTab />,
     collection: (
       <PlaceholderTab
         title="COLLECTION"
