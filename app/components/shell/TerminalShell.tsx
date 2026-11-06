@@ -7,15 +7,21 @@ import { StatusBar } from "./StatusBar";
 import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
+import { ContentPage } from "@/components/reader/ContentPage";
 import { LiveFeed } from "@/components/feed/LiveFeed";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
-// Inner shell content — has access to FocusProvider context
+interface OpenArticleState {
+  articleId: string;
+  listIndex: number;
+  articleList: string[];
+}
+
 function ShellContent() {
   const { activeTab, setActiveTab, setFocusContext, focusContext } = useFocus();
   const [systemMessage, setSystemMessage] = useState<string | undefined>(undefined);
+  const [openArticle, setOpenArticle] = useState<OpenArticleState | null>(null);
 
-  // Initialize DB on mount
   useEffect(() => {
     async function init() {
       try {
@@ -57,6 +63,22 @@ function ShellContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
 
+  function handleOpenArticle(articleId: string, listIndex: number, articleList?: string[]) {
+    setOpenArticle({ articleId, listIndex, articleList: articleList ?? [articleId] });
+    setFocusContext("CONTENT_PAGE");
+  }
+
+  function handleCloseArticle() {
+    setOpenArticle(null);
+    const map: Record<TabId, typeof focusContext> = {
+      curated:       "CURATED_LIST",
+      feed:          "FEED_LIST",
+      subscriptions: "SUBSCRIPTIONS",
+      collection:    "COLLECTION",
+    };
+    setFocusContext(map[activeTab]);
+  }
+
   const tabOrder: TabId[] = ["curated", "feed", "subscriptions", "collection"];
 
   const tabContent: Record<TabId, React.ReactNode> = {
@@ -68,10 +90,9 @@ function ShellContent() {
     ),
     feed: (
       <LiveFeed
-        onOpenArticle={(articleId) => {
-          // Content page navigation — wired in Task 5
-          console.log("Open article:", articleId);
-        }}
+        onOpenArticle={(articleId, listIndex) =>
+          handleOpenArticle(articleId, listIndex)
+        }
       />
     ),
     subscriptions: (
@@ -109,6 +130,20 @@ function ShellContent() {
           </div>
         ))}
       </main>
+
+      {/* KeyboardHintBar — hidden when content page is open (it renders its own) */}
+      {!openArticle && <KeyboardHintBar />}
+
+      {/* Content Page overlay */}
+      {openArticle && (
+        <ContentPage
+          articleId={openArticle.articleId}
+          articleList={openArticle.articleList}
+          listIndex={openArticle.listIndex}
+          onClose={handleCloseArticle}
+          onOpenArticle={(id, idx) => handleOpenArticle(id, idx, openArticle.articleList)}
+        />
+      )}
     </div>
   );
 }
