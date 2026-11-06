@@ -7,6 +7,7 @@ import { StatusBar } from "./StatusBar";
 import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
+import { LiveFeed } from "@/components/feed/LiveFeed";
 import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
@@ -64,9 +65,10 @@ function ShellContent() {
       />
     ),
     feed: (
-      <PlaceholderTab
-        title="FEED"
-        description="Live article feed — see Task 4"
+      <LiveFeed
+        onOpenArticle={(articleId) => {
+          console.log("Open article:", articleId);
+        }}
       />
     ),
     subscriptions: <SubscriptionsTab />,
