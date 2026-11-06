@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FocusProvider, useFocus, TabId } from "@/lib/contexts/FocusContext";
 import { useKeyboard } from "@/lib/hooks/useKeyboard";
 import { useEmbeddingStatus } from "@/lib/hooks/useEmbeddingStatus";
@@ -8,6 +8,8 @@ import { StatusBar } from "./StatusBar";
 import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
+import { LiveFeed } from "@/components/feed/LiveFeed";
+import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
 function ShellContent() {
@@ -53,7 +55,6 @@ function ShellContent() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
 
-  // Derive system message from embedding status
   let systemMessage: string | undefined;
   if (embeddingStatus.phase === "loading_model") {
     const bar = "█".repeat(Math.floor(embeddingStatus.modelProgress / 10));
@@ -73,17 +74,13 @@ function ShellContent() {
       />
     ),
     feed: (
-      <PlaceholderTab
-        title="FEED"
-        description="Live article feed — see Task 4"
+      <LiveFeed
+        onOpenArticle={(articleId) => {
+          console.log("Open article:", articleId);
+        }}
       />
     ),
-    subscriptions: (
-      <PlaceholderTab
-        title="SUBSCRIPTIONS"
-        description="See Task 6"
-      />
-    ),
+    subscriptions: <SubscriptionsTab />,
     collection: (
       <PlaceholderTab
         title="COLLECTION"
