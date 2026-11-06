@@ -8,6 +8,7 @@ import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
 import { ContentPage } from "@/components/reader/ContentPage";
+import { LiveFeed } from "@/components/feed/LiveFeed";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
 interface OpenArticleState {
@@ -33,6 +34,7 @@ function ShellContent() {
     init();
   }, []);
 
+  // Sync tab changes to focus context
   useEffect(() => {
     const map: Record<TabId, typeof focusContext> = {
       curated:       "CURATED_LIST",
@@ -87,9 +89,10 @@ function ShellContent() {
       />
     ),
     feed: (
-      <PlaceholderTab
-        title="FEED"
-        description="Live article feed — coming in Task 4"
+      <LiveFeed
+        onOpenArticle={(articleId, listIndex) =>
+          handleOpenArticle(articleId, listIndex)
+        }
       />
     ),
     subscriptions: (
