@@ -16,6 +16,37 @@ import { SettingsPanel } from "@/components/settings/SettingsPanel";
 import { getFeedIngestionService } from "@/lib/services/FeedIngestionService";
 import { getSignalProcessor } from "@/lib/recommendation/SignalProcessor";
 import { seedFeedDirectory, initializeUserProfile, UserProfileRepo } from "@/lib/db";
+import { LiveFeed } from "@/components/feed/LiveFeed";
+import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
+import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
+
+// ContentPage is in Task 5 branch — placeholder here with the full interface
+// It will be merged in the final integration branch (Task 10)
+function ContentPagePlaceholder({
+  articleId,
+  onClose,
+}: {
+  articleId: string;
+  onClose: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4"
+      style={{ backgroundColor: "var(--color-bg)" }}
+    >
+      <span style={{ color: "var(--color-primary)" }} className="text-sm glow">
+        ARTICLE: {articleId.slice(0, 12)}...
+      </span>
+      <button
+        onClick={onClose}
+        className="text-xs tracking-wider border px-3 py-1"
+        style={{ borderColor: "var(--color-border)", color: "var(--color-dim)" }}
+      >
+        ESC CLOSE
+      </button>
+    </div>
+  );
+}
 
 interface OpenArticleState {
   articleId: string;
