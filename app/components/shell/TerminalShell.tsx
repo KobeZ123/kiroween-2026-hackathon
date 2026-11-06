@@ -8,13 +8,21 @@ import { StatusBar } from "./StatusBar";
 import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
 import { PlaceholderTab } from "@/components/tabs/PlaceholderTab";
+import { CuratedFeed } from "@/components/curated/CuratedFeed";
 import { LiveFeed } from "@/components/feed/LiveFeed";
 import { SubscriptionsTab } from "@/components/subscriptions/SubscriptionsTab";
 import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
+interface OpenArticleState {
+  articleId: string;
+  listIndex: number;
+  articleList: string[];
+}
+
 function ShellContent() {
   const { activeTab, setActiveTab, setFocusContext, focusContext } = useFocus();
   const embeddingStatus = useEmbeddingStatus();
+  const [openArticle, setOpenArticle] = useState<OpenArticleState | null>(null);
 
   useEffect(() => {
     async function init() {
@@ -45,15 +53,28 @@ function ShellContent() {
       if (action.type === "SWITCH_TAB" && action.tab) {
         setActiveTab(action.tab);
       }
-      if (action.type === "SETTINGS") {
-        setFocusContext("SETTINGS");
-      }
     },
-    [setActiveTab, setFocusContext]
+    [setActiveTab]
   );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
+
+  function handleOpenArticle(articleId: string, listIndex: number, articleList?: string[]) {
+    setOpenArticle({ articleId, listIndex, articleList: articleList ?? [articleId] });
+    setFocusContext("CONTENT_PAGE");
+  }
+
+  function handleCloseArticle() {
+    setOpenArticle(null);
+    const map: Record<TabId, typeof focusContext> = {
+      curated:       "CURATED_LIST",
+      feed:          "FEED_LIST",
+      subscriptions: "SUBSCRIPTIONS",
+      collection:    "COLLECTION",
+    };
+    setFocusContext(map[activeTab]);
+  }
 
   let systemMessage: string | undefined;
   if (embeddingStatus.phase === "loading_model") {
@@ -68,16 +89,13 @@ function ShellContent() {
 
   const tabContent: Record<TabId, React.ReactNode> = {
     curated: (
-      <PlaceholderTab
-        title="CURATED"
-        description="Personalized recommendations — coming in Task 8"
+      <CuratedFeed
+        onOpenArticle={(id, idx, list) => handleOpenArticle(id, idx, list)}
       />
     ),
     feed: (
       <LiveFeed
-        onOpenArticle={(articleId) => {
-          console.log("Open article:", articleId);
-        }}
+        onOpenArticle={(id, idx) => handleOpenArticle(id, idx)}
       />
     ),
     subscriptions: <SubscriptionsTab />,
@@ -109,7 +127,7 @@ function ShellContent() {
           </div>
         ))}
       </main>
-      <KeyboardHintBar />
+      {!openArticle && <KeyboardHintBar />}
     </div>
   );
 }
