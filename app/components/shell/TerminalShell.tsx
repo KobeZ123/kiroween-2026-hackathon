@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { FocusProvider, useFocus, TabId } from "@/lib/contexts/FocusContext";
 import { useKeyboard } from "@/lib/hooks/useKeyboard";
+import { useEmbeddingStatus } from "@/lib/hooks/useEmbeddingStatus";
 import { StatusBar } from "./StatusBar";
 import { TabBar } from "./TabBar";
 import { KeyboardHintBar } from "./KeyboardHintBar";
@@ -13,7 +14,7 @@ import { seedFeedDirectory, initializeUserProfile } from "@/lib/db";
 
 function ShellContent() {
   const { activeTab, setActiveTab, setFocusContext, focusContext } = useFocus();
-  const [systemMessage, setSystemMessage] = useState<string | undefined>(undefined);
+  const embeddingStatus = useEmbeddingStatus();
 
   useEffect(() => {
     async function init() {
@@ -46,7 +47,6 @@ function ShellContent() {
       }
       if (action.type === "SETTINGS") {
         setFocusContext("SETTINGS");
-        setSystemMessage("[ SETTINGS ]");
       }
     },
     [setActiveTab, setFocusContext]
@@ -54,6 +54,15 @@ function ShellContent() {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   useKeyboard(handleAction as any);
+
+  let systemMessage: string | undefined;
+  if (embeddingStatus.phase === "loading_model") {
+    const bar = "█".repeat(Math.floor(embeddingStatus.modelProgress / 10));
+    const empty = "░".repeat(10 - bar.length);
+    systemMessage = `CALIBRATING ENGINE [${bar}${empty}] ${embeddingStatus.modelProgress}%`;
+  } else if (embeddingStatus.phase === "processing") {
+    systemMessage = `EMBEDDING ARTICLES... (${embeddingStatus.queueLength} remaining)`;
+  }
 
   const tabOrder: TabId[] = ["curated", "feed", "subscriptions", "collection"];
 
