@@ -1,0 +1,149 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   READER.EXE — Design Tokens
+   ───────────────────────────────────────────────────────────── */
+:root {
+  --color-bg:           #0d1a0d;
+  --color-primary:      #39ff14;
+  --color-dim:          #2a6b2a;
+  --color-border:       #1e4a1e;
+  --color-cursor:       #39ff14;
+  --color-bg-selected:  #0f2e0f;
+  --color-bg-hover:     #0a200a;
+
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+  --font-size-base: 14px;
+  --line-height-base: 1.6;
+
+  --scanline-opacity: 0.03;
+  --glow-spread:  0 0 8px rgba(57, 255, 20, 0.4);
+  --glow-text:    0 0 4px rgba(57, 255, 20, 0.6);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Base reset & body
+   ───────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background-color: var(--color-bg);
+  color: var(--color-primary);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   CRT Scanline overlay
+   ───────────────────────────────────────────────────────────── */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, var(--scanline-opacity)) 2px,
+    rgba(0, 0, 0, var(--scanline-opacity)) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Phosphor glow on primary text
+   ───────────────────────────────────────────────────────────── */
+.glow {
+  text-shadow: var(--glow-text);
+}
+
+.glow-box {
+  box-shadow: var(--glow-spread);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Cursor blink animation
+   ───────────────────────────────────────────────────────────── */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+.cursor-blink {
+  animation: blink 1s step-end infinite;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Typewriter animation (used in boot sequence)
+   ───────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Scrollbar styling
+   ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-dim);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Selection color
+   ───────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--color-dim);
+  color: var(--color-primary);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Reduced motion: disable all animations
+   ───────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    display: none;
+  }
+  .cursor-blink {
+    animation: none;
+  }
+  .fade-in {
+    animation: none;
+    opacity: 1;
+  }
+  .glow, .glow-box {
+    text-shadow: none;
+    box-shadow: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Utility classes for the terminal palette
+   ───────────────────────────────────────────────────────────── */
+.text-primary  { color: var(--color-primary); }
+.text-dim      { color: var(--color-dim); }
+.bg-terminal   { background-color: var(--color-bg); }
+.bg-selected   { background-color: var(--color-bg-selected); }
+.border-terminal { border-color: var(--color-border); }
